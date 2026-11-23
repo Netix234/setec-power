@@ -29,6 +29,9 @@
         <label>Характеристики <span class="field-hint">Один рядок — одна характеристика у форматі Назва: Значення</span><textarea id="pSpecs" rows="4" placeholder="Потужність: 500 Вт&#10;Тип: Монокристалічна&#10;Гарантія: 10 років"></textarea></label>
         <label class="upload-label">Фото товару<input id="pImageFile" type="file" accept="image/*"><span class="field-hint">JPG, PNG або WEBP. Рекомендовано до 1,5 МБ.</span></label>
         <div class="admin-image-preview" id="imagePreview">Фото не вибрано</div><input type="hidden" id="pImage">
+        <label>Група порівняння <span class="field-hint">Товари з однаковою групою порівнюються між собою (напр. inverter-hybrid). Порожньо — без порівняння</span><input id="pFamily" type="text" placeholder="inverter-hybrid"></label>
+        <label>Потужність / ємність для сортування <span class="field-hint">Число: 5 для 5 кВт, 450 для 450 Вт</span><input id="pRank" type="number" step="any" placeholder="5"></label>
+        <label>Сумісні товари <span class="field-hint">Через кому: id товару, @категорія (напр. @batteries) або #група (напр. #inverter-hybrid)</span><input id="pCompat" type="text" placeholder="@batteries, @panels"></label>
         <label class="check-label"><input id="pHit" type="checkbox"> Позначити як «Хіт»</label>
         <div class="admin-form-actions"><button class="admin-btn primary" type="submit">Зберегти товар</button><button class="admin-btn" type="button" id="resetForm">Очистити</button></div>
         <p class="admin-message" id="productMessage" role="status"></p>

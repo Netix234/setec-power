@@ -34,6 +34,41 @@
     </div>
     <div class="pp-specs"><h2>Характеристики</h2><dl>${p.specs.map(s => `<div><dt>${esc(s[0])}</dt><dd>${esc(s[1])}</dd></div>`).join('')}</dl></div>`;
 
+  // ---------- Порівняння моделей однієї групи (напр. інвертори різної потужності) ----------
+  const fam = p.family ? list.filter(x => x.family === p.family).sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0)) : [];
+  if (fam.length > 1) {
+    const labels = [];
+    fam.forEach(x => (x.specs || []).forEach(sp => { if (!labels.includes(sp[0])) labels.push(sp[0]); }));
+    const val = (x, l) => { const r = (x.specs || []).find(sp => sp[0] === l); return r ? esc(r[1]) : '—'; };
+    const at = fam.indexOf(p);
+    const tag = (x, k) => x === p ? '<em class="cmp-now">Ви переглядаєте</em>' : k > at ? '<em class="cmp-up">Потужніша</em>' : '<em class="cmp-down">Менша</em>';
+    const cmp = document.createElement('section');
+    cmp.className = 'pp-block';
+    cmp.innerHTML = `<h2>Порівняння моделей</h2><p class="pp-lead">Інші моделі цієї лінійки — оберіть потрібну потужність.</p>
+      <div class="cmp-wrap"><table class="cmp"><thead><tr><th></th>${fam.map(x => `<th class="${x === p ? 'is-now' : ''}">${tag(x, fam.indexOf(x))}<a href="product.html?id=${esc(x.id)}">${esc(x.name)}</a></th>`).join('')}</tr></thead>
+      <tbody><tr><th>Ціна</th>${fam.map(x => `<td class="${x === p ? 'is-now' : ''}"><strong>${fmt(x)}</strong></td>`).join('')}</tr>
+      ${labels.map(l => `<tr><th>${esc(l)}</th>${fam.map(x => `<td class="${x === p ? 'is-now' : ''}">${val(x, l)}</td>`).join('')}</tr>`).join('')}
+      <tr><th></th>${fam.map(x => `<td class="${x === p ? 'is-now' : ''}">${x === p ? '' : `<a class="pill pill-solid" href="product.html?id=${esc(x.id)}">Детальніше</a>`}</td>`).join('')}</tr></tbody></table></div>`;
+    root.appendChild(cmp);
+  }
+
+  // ---------- Сумісні товари (за категоріями; працює й для майбутніх товарів) ----------
+  const compat = window.ProductUtil.compatOf(p);
+  if (compat.length) {
+    const groups = {};
+    compat.forEach(x => (groups[x.categoryLabel] = groups[x.categoryLabel] || []).push(x));
+    const card = x => `<article class="product-card" data-category="${esc(x.category)}">
+      <div class="pc-img"><a href="product.html?id=${esc(x.id)}" aria-label="${esc(x.name)}">${art(x)}</a>${x.hit ? '<span class="pc-hit">Хіт</span>' : ''}</div>
+      <div class="pc-body"><small>${esc(x.categoryLabel)}</small><h3><a href="product.html?id=${esc(x.id)}">${esc(x.name)}</a></h3><p>${esc(x.short)}</p>
+        <div class="pc-foot"><strong class="${x.price == null ? 'ask' : ''}">${fmt(x)}</strong>
+          <button class="pill pill-solid" type="button" data-add-to-cart data-open-cart data-id="${esc(x.id)}" data-name="${esc(x.name)}" data-category="${esc(x.categoryLabel)}" data-image="${esc(uri(x))}" data-price="${x.price == null ? '' : x.price}">В кошик</button></div></div></article>`;
+    const sec = document.createElement('section');
+    sec.className = 'pp-block';
+    sec.innerHTML = `<h2>Сумісні товари</h2><p class="pp-lead">Підходять до «${esc(p.name)}».</p>` +
+      Object.entries(groups).map(([label, arr]) => `<h3 class="compat-title">${esc(label)}</h3><div class="product-grid compat-grid">${arr.map(card).join('')}</div>`).join('');
+    root.appendChild(sec);
+  }
+
   const qty = root.querySelector('#ppQty');
   const clamp = () => { qty.value = Math.max(1, parseInt(qty.value, 10) || 1); };
   root.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => { qty.value = (parseInt(qty.value, 10) || 1) + Number(b.dataset.q); clamp(); }));
