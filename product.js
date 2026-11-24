@@ -35,7 +35,9 @@
     <div class="pp-specs"><h2>Характеристики</h2><dl>${p.specs.map(s => `<div><dt>${esc(s[0])}</dt><dd>${esc(s[1])}</dd></div>`).join('')}</dl></div>`;
 
   // ---------- Порівняння моделей однієї групи (напр. інвертори різної потужності) ----------
-  const fam = p.family ? list.filter(x => x.family === p.family).sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0)) : [];
+  // Група порівняння визначається автоматично (категорія + потужність/ємність з назви)
+  const { familyOf, rankOf } = window.ProductUtil;
+  const fam = rankOf(p) != null ? list.filter(x => familyOf(x) === familyOf(p) && rankOf(x) != null).sort((a, b) => rankOf(a) - rankOf(b)) : [];
   if (fam.length > 1) {
     const labels = [];
     fam.forEach(x => (x.specs || []).forEach(sp => { if (!labels.includes(sp[0])) labels.push(sp[0]); }));

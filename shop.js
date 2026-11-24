@@ -1,6 +1,15 @@
 /* Shop layer: header, footer, home sections, catalog URL params. Does not touch cart/catalog logic. */
 (() => {
-  const CATS = [['panels','Сонячні панелі'],['inverters','Інвертори'],['batteries','Акумулятори'],['bess','BESS та резерв'],['mounting','Кріплення'],['kits','Комплекти СЕС']];
+  // Категорії керуються в адмін-панелі (вкладка «Категорії»); тут — [id, назва, тип].
+  const CATS = (() => {
+    if (window.CATEGORIES) return window.CATEGORIES.map(c => [c.id, c.label, c.icon]);
+    try {
+      const v = JSON.parse(localStorage.getItem('solar-admin-categories-v1') || 'null');
+      if (Array.isArray(v) && v.length) return v.filter(c => c && c.id && c.label).map(c => [String(c.id), String(c.label), c.icon || 'other']);
+    } catch (e) {}
+    return [['panels','Сонячні панелі','panel'],['inverters','Інвертори','inverter'],['batteries','Акумулятори','battery'],['bess','BESS та резерв','bess'],['mounting','Кріплення','mount'],['kits','Комплекти СЕС','kit']];
+  })();
+  const escC = v => String(v).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
   const PHONE = ['+38 (0XX) XXX XX XX', '+380000000000'];
   const page = location.pathname.split('/').pop() || 'index.html';
   const act = h => page === h ? ' class="active"' : '';
@@ -13,24 +22,34 @@
       <button class="menu-toggle" type="button" aria-label="Меню" aria-expanded="false"><i></i><i></i><i></i></button>
       <a class="logo" href="index.html">SETEC POWER</a>
       <form class="hdr-search" action="catalog.html" role="search"><input name="q" type="search" placeholder="Пошук: панелі, інвертори, акумулятори…" aria-label="Пошук"><button aria-label="Шукати">Знайти</button></form>
-      <div class="hdr-actions"><a class="hdr-link" href="catalog.html?fav=1">♡ Обране</a><a class="hdr-link" href="contacts.html">Контакти</a></div>
+      <div class="hdr-actions"><a class="hdr-link" href="catalog.html?fav=1">♡ Обране</a><a class="hdr-link" href="contacts.html">Контакти</a><label class="currency-switch" aria-label="Валюта"><span>Валюта</span><select id="currencySelect" aria-label="Оберіть валюту"><option value="UAH">₴ UAH</option><option value="EUR">€ EUR</option></select></label></div>
     </div>
-    <nav class="nav"><div class="wrap"><a data-cat="all" href="catalog.html">Усі товари</a>${CATS.map(c => `<a data-cat="${c[0]}" href="catalog.html?cat=${c[0]}">${c[1]}</a>`).join('')}<a${act('calculator.html')} class="hot" href="calculator.html">Калькулятор СЕС</a><a${act('about.html')} href="about.html">Про компанію</a></div></nav>`;
+    <nav class="nav"><div class="wrap"><a data-cat="all" href="catalog.html">Усі товари</a>${CATS.map(c => `<a data-cat="${escC(c[0])}" href="catalog.html?cat=${escC(c[0])}">${escC(c[1])}</a>`).join('')}<a${act('calculator.html')} class="hot" href="calculator.html">Калькулятор СЕС</a><a${act('about.html')} href="about.html">Про компанію</a></div></nav>`;
     if (cart) header.querySelector('.hdr-actions').appendChild(cart);
     const t = header.querySelector('.menu-toggle'), n = header.querySelector('.nav');
     t.addEventListener('click', () => t.setAttribute('aria-expanded', String(n.classList.toggle('open'))));
+    const currencySelect = header.querySelector('#currencySelect');
+    if (currencySelect) {
+      let currency = 'UAH';
+      try { currency = localStorage.getItem('setec-currency-v1') === 'EUR' ? 'EUR' : 'UAH'; } catch (e) {}
+      currencySelect.value = currency;
+      currencySelect.addEventListener('change', () => {
+        try { localStorage.setItem('setec-currency-v1', currencySelect.value); } catch (e) {}
+        location.reload();
+      });
+    }
   }
   const footer = document.querySelector('.footer');
   if (footer) footer.innerHTML = `<div class="wrap"><div class="ft-grid">
     <div><h4>SETEC POWER</h4><p>Комплексні рішення у сфері сонячної енергетики: обладнання, проєктування та монтаж під ключ.</p></div>
     <div><h4>Покупцям</h4><a href="delivery.html">Доставка та оплата</a><a href="returns.html">Повернення</a><a href="calculator.html">Калькулятор СЕС</a><a href="contacts.html">Контакти</a></div>
-    <div><h4>Каталог</h4>${CATS.map(c => `<a href="catalog.html?cat=${c[0]}">${c[1]}</a>`).join('')}</div>
+    <div><h4>Каталог</h4>${CATS.map(c => `<a href="catalog.html?cat=${escC(c[0])}">${escC(c[1])}</a>`).join('')}</div>
     <div><h4>Зв’яжіться з нами</h4><a href="tel:${PHONE[1]}">${PHONE[0]}</a><p>ПН–ПТ 09:00–18:00</p><a href="about.html">Про компанію</a><a href="objects.html">Наші об’єкти</a></div>
   </div><p class="official-distributor">Ми є офіційними дистриб’юторами SETEC POWER.</p><div class="ft-bottom">© ${new Date().getFullYear()} SETEC POWER. Усі права захищені.</div></div>`;
 
   const U = window.ProductUtil, P = window.PRODUCTS;
   const cats = document.querySelector('#shopCats');
-  if (cats && U) cats.innerHTML = CATS.map(c => { const p = (P || []).find(x => x.category === c[0]) || { icon: 'kit' }; return `<a href="catalog.html?cat=${c[0]}">${U.art(p.image ? { icon: p.icon } : p)}${c[1]}</a>`; }).join('');
+  if (cats && U) cats.innerHTML = CATS.map(c => { const p = (P || []).find(x => x.category === c[0]) || { icon: c[2] || 'other' }; return `<a href="catalog.html?cat=${escC(c[0])}">${U.art(p.image ? { icon: p.icon } : p)}${escC(c[1])}</a>`; }).join('');
   const hits = document.querySelector('#shopHits');
   if (hits && U && P) {
     const list = (P.filter(p => p.hit).length ? P.filter(p => p.hit) : P).slice(0, 4);

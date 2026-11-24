@@ -4,6 +4,10 @@
   const $ = s => document.querySelector(s);
   const { fmt, esc, art, uri } = window.ProductUtil;
   const items = window.PRODUCTS.map((p, i) => ({ ...p, pop: i }));
+  // Кнопки категорій будуються зі списку категорій з адмін-панелі
+  const tabs = document.querySelector('.category-tabs');
+  if (tabs) tabs.innerHTML = '<button class="filter active" data-filter="all">Усе обладнання</button>' +
+    window.CATEGORIES.map(c => `<button class="filter" data-filter="${esc(c.id)}">${esc(c.label)}</button>`).join('');
   const FAV = 'solar-fav-v1';
   let favs = new Set();
   try { favs = new Set(JSON.parse(localStorage.getItem(FAV) || '[]')); } catch (e) {}
@@ -25,7 +29,7 @@
       [nMin, nMax].forEach(n => { n.min = st.lo; n.max = st.hi; n.step = step; });
     }
     st.min = st.lo; st.max = st.hi;
-    $('#priceScope').textContent = st.cat === 'all' ? '' : '· ' + (items.find(p => p.category === st.cat)?.categoryLabel || '');
+    $('#priceScope').textContent = st.cat === 'all' ? '' : '· ' + (window.CATEGORIES.find(c => c.id === st.cat)?.label || '');
     $('#priceNote').textContent = st.has ? '' : 'У цьому розділі ціни за запитом';
     [rMin, rMax, nMin, nMax].forEach(el => el.disabled = !st.has);
     paintRange();

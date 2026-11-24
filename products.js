@@ -8,6 +8,7 @@
     battery: `<svg ${X}><rect x="8" y="32" width="84" height="36" rx="4" fill="#5b636c"/><rect x="14" y="39" width="72" height="6" rx="2" fill="#2a2f38"/><circle cx="22" cy="58" r="3" fill="#f5c400"/><rect x="34" y="55" width="46" height="5" rx="2" fill="#2a2f38"/></svg>`,
     bess: `<svg ${X}><rect x="24" y="8" width="52" height="84" rx="5" fill="#e9edf0" stroke="#b9c1c8" stroke-width="2"/><rect x="31" y="16" width="38" height="14" rx="2" fill="#2a2f38"/><path d="M31 42h38M31 52h38M31 62h38M31 72h38" stroke="#b9c1c8" stroke-width="2"/><circle cx="62" cy="23" r="2.5" fill="#7bd36b"/></svg>`,
     mount: `<svg ${X}><path d="M10 70L50 30l40 40" fill="none" stroke="#6d7782" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 58l8 12M78 58l-8 12M50 30v40" stroke="#9aa3ab" stroke-width="4" stroke-linecap="round"/><rect x="8" y="72" width="84" height="6" rx="3" fill="#2a2f38"/></svg>`,
+    other: `<svg ${X}><path d="M50 14l34 18v36L50 86 16 68V32z" fill="#e9edf0" stroke="#8d97a0" stroke-width="2" stroke-linejoin="round"/><path d="M16 32l34 18 34-18M50 50v36" fill="none" stroke="#8d97a0" stroke-width="2"/></svg>`,
     kit: `<svg ${X}><path d="M10 54l22-30h30l-14 44H10z" fill="#2a2f38" stroke="#8d97a0" stroke-width="2"/><rect x="62" y="34" width="28" height="42" rx="4" fill="#fff" stroke="#b9c1c8" stroke-width="2"/><circle cx="76" cy="46" r="3" fill="#f5c400"/><rect x="68" y="56" width="16" height="3" rx="1.5" fill="#c3cad0"/></svg>`
   };
   const L = { panels: 'Сонячні панелі', inverters: 'Інвертори', batteries: 'Акумулятори', bess: 'BESS та резерв', mounting: 'Кріплення', kits: 'Комплекти СЕС' };
@@ -50,61 +51,91 @@
     P('kit-10', 'kits', 'Готовий комплект СЕС 10 кВт', null, { short: 'Підібрана комплектація під ваші задачі.' }),
     P('kit-15', 'kits', 'Комплект СЕС 15 кВт з акумулятором', 395000, { short: 'Автономність і резерв.' })
   ];
-  // Групи порівняння (family + rank = потужність/ємність для сортування) та сумісність.
-  // compat: список id товарів, «@категорія» (напр. '@batteries') або «#група» (напр. '#inverter-hybrid'). Зв’язок працює в обидва боки.
-  const S = (name, extra = []) => [['Потужність', name], ...extra];
+  // Додаткові характеристики для початкових товарів.
+  // Групи порівняння та сумісні товари визначаються автоматично (див. нижче) — вручну їх вказувати не потрібно.
   const META = {
-    'panel-430': { family: 'panels', rank: 430, specs: [['Потужність', '430 Вт'], ['Тип', 'Двостороння, Full Black'], ['Гарантія', 'За умовами виробника']], compat: ['@inverters', '@mounting'] },
-    'panel-450': { family: 'panels', rank: 450, compat: ['@inverters', '@mounting'] },
-    'panel-500': { family: 'panels', rank: 500, specs: [['Потужність', '500 Вт'], ['Тип', 'N-Type, двостороння'], ['Гарантія', 'За умовами виробника']], compat: ['@inverters', '@mounting'] },
-    'panel-550': { family: 'panels', rank: 550, specs: [['Потужність', '550 Вт'], ['Призначення', 'Комерційні об’єкти'], ['Гарантія', 'За умовами виробника']], compat: ['@inverters', '@mounting'] },
-    'inv-3': { family: 'inverter-hybrid', rank: 3, specs: [['Тип', 'Гібридний'], ['Номінальна потужність', '3 кВт'], ['Гарантія', 'За умовами виробника']], compat: ['@batteries', '@panels'] },
-    'inverter-hybrid-5': { family: 'inverter-hybrid', rank: 5, compat: ['@batteries', '@panels'] },
-    'inv-8': { family: 'inverter-hybrid', rank: 8, specs: [['Тип', 'Гібридний'], ['Номінальна потужність', '8 кВт'], ['Гарантія', 'За умовами виробника']], compat: ['@batteries', '@panels'] },
-    'inv-12': { family: 'inverter-hybrid', rank: 12, specs: [['Тип', 'Гібридний'], ['Номінальна потужність', '12 кВт'], ['Фази', 'Трифазний'], ['Гарантія', 'За умовами виробника']], compat: ['@batteries', '@panels'] },
-    'inv-grid-10': { family: 'inverter-grid', rank: 10, specs: [['Тип', 'Мережевий'], ['Номінальна потужність', '10 кВт'], ['Гарантія', 'За умовами виробника']], compat: ['@panels', '@mounting'] },
-    'bat-2': { family: 'battery', rank: 2.4, specs: [['Хімія', 'LiFePO4'], ['Ємність', '2,4 кВт·год'], ['Гарантія', 'За умовами виробника']] },
-    'battery-5': { family: 'battery', rank: 5 },
-    'bat-10': { family: 'battery', rank: 10, specs: [['Хімія', 'LiFePO4'], ['Ємність', '10 кВт·год'], ['Гарантія', 'За умовами виробника']] },
-    'bess-15': { family: 'bess', rank: 15 }, 'bess-cabinet': { family: 'bess', rank: 30 }, 'bess-100': { family: 'bess', rank: 100 },
-    'kit-5': { family: 'kit', rank: 5 }, 'kit-10': { family: 'kit', rank: 10 }, 'kit-15': { family: 'kit', rank: 15 },
-    'mount-roof': { compat: ['@panels'] }, 'rail-42': { compat: ['@panels'] }, 'mount-flat': { compat: ['@panels'] }
+    'panel-430': { specs: [['Потужність', '430 Вт'], ['Тип', 'Двостороння, Full Black'], ['Гарантія', 'За умовами виробника']] },
+    'panel-500': { specs: [['Потужність', '500 Вт'], ['Тип', 'N-Type, двостороння'], ['Гарантія', 'За умовами виробника']] },
+    'panel-550': { specs: [['Потужність', '550 Вт'], ['Призначення', 'Комерційні об’єкти'], ['Гарантія', 'За умовами виробника']] },
+    'inv-3': { specs: [['Тип', 'Гібридний'], ['Номінальна потужність', '3 кВт'], ['Гарантія', 'За умовами виробника']] },
+    'inv-8': { specs: [['Тип', 'Гібридний'], ['Номінальна потужність', '8 кВт'], ['Гарантія', 'За умовами виробника']] },
+    'inv-12': { specs: [['Тип', 'Гібридний'], ['Номінальна потужність', '12 кВт'], ['Фази', 'Трифазний'], ['Гарантія', 'За умовами виробника']] },
+    'inv-grid-10': { specs: [['Тип', 'Мережевий'], ['Номінальна потужність', '10 кВт'], ['Гарантія', 'За умовами виробника']] },
+    'bat-2': { specs: [['Хімія', 'LiFePO4'], ['Ємність', '2,4 кВт·год'], ['Гарантія', 'За умовами виробника']] },
+    'bat-10': { specs: [['Хімія', 'LiFePO4'], ['Ємність', '10 кВт·год'], ['Гарантія', 'За умовами виробника']] }
   };
-  ['bat-2', 'battery-5', 'bat-10'].forEach(id => { META[id].compat = ['#inverter-hybrid']; });
   products.forEach(p => { const m = META[p.id]; if (m) Object.assign(p, m); });
 
-  const fmt = p => p.price == null ? 'Ціна за запитом' : p.price.toLocaleString('uk-UA') + ' грн';
+  // Валюта відображення: UAH за замовчуванням; курс можна змінити тут.
+  const EUR_RATE = 50;
+  const getCurrency = () => {
+    try { return localStorage.getItem('setec-currency-v1') === 'EUR' ? 'EUR' : 'UAH'; }
+    catch (e) { return 'UAH'; }
+  };
+  const fmt = p => {
+    if (p.price == null) return 'Ціна за запитом';
+    const currency = getCurrency();
+    const value = currency === 'EUR' ? p.price / EUR_RATE : p.price;
+    return value.toLocaleString('uk-UA', { minimumFractionDigits: currency === 'EUR' ? 2 : 0, maximumFractionDigits: 2 }) + (currency === 'EUR' ? ' €' : ' грн');
+  };
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const art = p => p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}">` : icons[p.icon];
   const uri = p => p.image || 'data:image/svg+xml,' + encodeURIComponent(icons[p.icon]);
   // Локальні зміни з адмін-панелі мають пріоритет над початковим каталогом.
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem('solar-admin-products-v1') || 'null'); } catch (e) {}
-  // Якщо товар збережено раніше без нових полів — підставляємо їх із початкового каталогу.
-  const base = Object.fromEntries(products.map(p => [p.id, p]));
-  const merged = Array.isArray(saved) ? saved.map(p => { const b = base[p.id]; return b ? { family: b.family, rank: b.rank, compat: b.compat, ...p } : p; }) : products;
-  // Автовизначення для нових товарів: якщо група/потужність/сумісність не задані вручну,
-  // беремо їх із назви (число перед «кВт», «Вт», «кВт·год») та категорії.
-  const infer = p => {
-    const n = p.name || '', m = n.match(/(\d+(?:[.,]\d+)?)\s*(кВт·год|кВт|Вт)/i);
-    const rank = m ? parseFloat(m[1].replace(',', '.')) : undefined;
-    let family;
-    if (p.category === 'inverters') family = /мережев/i.test(n) ? 'inverter-grid' : 'inverter-hybrid';
-    else family = { panels: 'panels', batteries: 'battery', bess: 'bess', kits: 'kit' }[p.category];
-    const compat = family === 'inverter-hybrid' ? ['@batteries', '@panels'] : family === 'inverter-grid' ? ['@panels', '@mounting']
-      : p.category === 'batteries' ? ['#inverter-hybrid'] : p.category === 'panels' ? ['@inverters', '@mounting'] : p.category === 'mounting' ? ['@panels'] : [];
-    return { family, rank, compat };
-  };
+  const merged = Array.isArray(saved) ? saved : products;
+
+  // ---------- Категорії (керуються в адмін-панелі, вкладка «Категорії») ----------
+  // icon = тип обладнання: panel | inverter | battery | bess | mount | kit | other.
+  // За типом автоматично визначаються порівняння моделей і сумісні товари.
+  const CAT_KEY = 'solar-admin-categories-v1';
+  const KINDS = { panel: 'Сонячні панелі', inverter: 'Інвертори', battery: 'Акумулятори', bess: 'BESS / системи зберігання', mount: 'Кріплення та кабелі', kit: 'Комплекти СЕС', other: 'Інше (без автозв’язків)' };
+  const defaultCats = Object.keys(L).map(id => ({ id, label: L[id], icon: I[id] }));
+  let cats = null;
+  try {
+    const v = JSON.parse(localStorage.getItem(CAT_KEY) || 'null');
+    if (Array.isArray(v)) cats = v.filter(c => c && c.id && c.label).map(c => ({ id: String(c.id), label: String(c.label), icon: icons[c.icon] ? c.icon : 'other' }));
+  } catch (e) {}
+  if (!cats || !cats.length) cats = defaultCats.map(c => ({ ...c }));
+  const catOf = id => cats.find(c => c.id === id);
+  // Назва й тип категорії завжди беруться з актуального списку категорій.
   merged.forEach(p => {
-    const d = infer(p);
-    if (!p.family) p.family = d.family;
-    if (p.rank == null) p.rank = d.rank;
-    if (!p.compat || !p.compat.length) p.compat = d.compat;
+    let c = catOf(p.category);
+    if (!c) { c = { id: p.category, label: p.categoryLabel || String(p.category), icon: icons[p.icon] ? p.icon : 'other' }; cats.push(c); }
+    p.categoryLabel = c.label; p.icon = c.icon;
   });
-  // Сумісність у обидва боки: якщо A вказує на B, то B теж показує A.
-  const matches = (p, ref) => ref[0] === '@' ? p.category === ref.slice(1) : ref[0] === '#' ? p.family === ref.slice(1) : p.id === ref;
-  const compatOf = p => merged.filter(q => q.id !== p.id && (
-    (p.compat || []).some(r => matches(q, r)) || (q.compat || []).some(r => matches(p, r))));
+
+  // ---------- Автоматичні групи порівняння ----------
+  // Модель порівнюється з іншими моделями своєї групи. Група = категорія
+  // (для інверторів — окремо гібридні та мережеві). Потужність/ємність береться
+  // з назви («5 кВт», «450 Вт», «2,4 кВт·год») або з характеристик; без неї порівняння не показується.
+  const kindOf = p => (catOf(p.category) || {}).icon || p.icon || 'other';
+  const isGrid = p => /мережев/i.test(p.name || '');
+  const familyOf = p => kindOf(p) === 'inverter' ? (isGrid(p) ? 'inverter-grid' : 'inverter-hybrid') : p.category;
+  const UNIT = /(\d+(?:[.,]\d+)?)\s*(кВт·год|кВт|Вт)/i;
+  const num = s => { const m = String(s == null ? '' : s).match(UNIT); return m ? parseFloat(m[1].replace(',', '.')) : undefined; };
+  const rankOf = p => {
+    if (p.rank != null && p.rank !== '' && isFinite(Number(p.rank))) return Number(p.rank); // необов'язкове ручне значення
+    let r = num(p.name);
+    if (r == null) for (const sp of (p.specs || [])) { if (/потужн|ємн/i.test(sp[0])) { r = num(sp[1]); if (r != null) break; } }
+    return r;
+  };
+
+  // ---------- Автоматична сумісність (працює в обидва боки) ----------
+  const needs = p => {
+    switch (kindOf(p)) {
+      case 'panel': return [['inverter'], ['mount']];
+      case 'inverter': return isGrid(p) ? [['panel'], ['mount']] : [['battery'], ['panel']];
+      case 'battery': return [['inverter', 'hybrid']];
+      case 'mount': return [['panel']];
+      default: return [];
+    }
+  };
+  const fits = (p, q) => needs(p).some(([k, sub]) => kindOf(q) === k && (!sub || (sub === 'grid') === isGrid(q)));
+  const compatOf = p => merged.filter(q => q.id !== p.id && (fits(p, q) || fits(q, p)));
   window.PRODUCTS = merged;
-  window.ProductUtil = { fmt, esc, art, uri, compatOf };
+  window.CATEGORIES = cats;
+  window.CategoryStore = { KEY: CAT_KEY, KINDS, defaults: defaultCats };
+  window.ProductUtil = { fmt, esc, art, uri, compatOf, familyOf, rankOf, kindOf };
 })();
